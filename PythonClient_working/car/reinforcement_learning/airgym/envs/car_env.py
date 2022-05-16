@@ -7,6 +7,7 @@ import time
 import gym
 from gym import spaces
 from airgym.envs.airsim_env import AirSimEnv
+from scipy.special import softmax
 
 
 class AirSimCarEnv(AirSimEnv):
@@ -25,7 +26,10 @@ class AirSimCarEnv(AirSimEnv):
         }
 
         self.car = airsim.CarClient(ip=ip_address)
-        self.action_space = spaces.Discrete(16)
+        # for descrete action space
+        # self.action_space = spaces.Discrete(16)
+        # for continuous action space
+        self.action_space = spaces.Box(low=-1, high=1, shape=(16, ))
 
         self.image_request = airsim.ImageRequest(
             "0", airsim.ImageType.DepthPerspective, True, False
@@ -113,7 +117,6 @@ class AirSimCarEnv(AirSimEnv):
             self.car_controls.brake = 0
             self.car_controls.steering = -0.25
 
-
         self.car.setCarControls(self.car_controls)
         time.sleep(3)
 
@@ -172,7 +175,7 @@ class AirSimCarEnv(AirSimEnv):
             reward = -3
         else:
             driving_end_time = time.time()
-            reward_dist = math.exp(-BETA * dist) - 0.5
+            reward_dist = 2 * (math.exp(-BETA * dist) - 0.5)
             reward_speed = (
                 (self.car_state.speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
             ) - 0.5
@@ -201,6 +204,10 @@ class AirSimCarEnv(AirSimEnv):
         return reward, done
 
     def step(self, action):
+        # for continuous action_space
+        action = softmax(action) # if descrete, ignore this
+        action = int(np.random.choice(16, 1, p=action)) # if descrete, ignore this
+
         self._do_action(action)
         obs = self._get_obs()
         reward, done = self._compute_reward()
