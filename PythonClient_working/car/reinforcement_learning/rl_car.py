@@ -74,7 +74,7 @@ model_ddpg = DDPG(
     verbose=1,
     batch_size=32,
     train_freq=4,
-    buffer_size=1000000,
+    buffer_size=400000,
     device="auto",
     tensorboard_log="./tb_logs/",
 )
