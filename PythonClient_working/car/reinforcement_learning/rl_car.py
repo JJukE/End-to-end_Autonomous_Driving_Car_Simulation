@@ -44,11 +44,11 @@ env = VecTransposeImage(env)
 #    batch_size=32,
 #    train_freq=4,
 #    target_update_interval=10000,
-#    learning_starts=200000,
-#    buffer_size=500000,
+#    learning_starts=1000,
+#    buffer_size=400000,
 #    max_grad_norm=10,
 #    exploration_fraction=0.1,
-#    exploration_initial_eps=0.4,
+#    exploration_initial_eps=0.8,
 #    exploration_final_eps=0.01,
 #    device="auto",
 #    tensorboard_log="./tb_logs/",
@@ -69,11 +69,14 @@ env = VecTransposeImage(env)
 model_ddpg = DDPG(
     "CnnPolicy",
     env,
-    learning_rate=0.0005,
-    tau = 0.001,
+    actor_lr=0.0005,
+    critic_lr=0.002,
+    critic_l2_reg=0.2,
+    tau=0.8,
+    normalize_observations=True,
+    normalize_returns=True,
     verbose=1,
     batch_size=32,
-    train_freq=4,
     buffer_size=400000,
     device="auto",
     tensorboard_log="./tb_logs/",
@@ -102,4 +105,4 @@ model_ddpg.learn(
 )
 
 # Save policy weights
-model_a2c.save("ddpg_airsim_car_policy")
+model_ddpg.save("dqn_airsim_car_policy")

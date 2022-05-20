@@ -26,10 +26,13 @@ class AirSimCarEnv(AirSimEnv):
         }
 
         self.car = airsim.CarClient(ip=ip_address)
+
         # for descrete action space
         # self.action_space = spaces.Discrete(16)
+
         # for continuous action space
-        self.action_space = spaces.Box(low=-1, high=1, shape=(16, ))
+        # self.action_space = spaces.Box(low=-1, high=1, shape=(16, ))
+        self.action_space = spaces.Box( np.array([0, 0, -1]).astype(np.float32), np.array([1, 1, 1]).astype(no.float32)) # throttle, brake, steering
 
         self.image_request = airsim.ImageRequest(
             "0", airsim.ImageType.DepthPerspective, True, False
@@ -120,6 +123,18 @@ class AirSimCarEnv(AirSimEnv):
         self.car.setCarControls(self.car_controls)
         time.sleep(3)
 
+    def _do_cts_action(self, action):
+        self.car_controls.brake = 0
+        self.car_controls.throttle = 1
+
+        self.car_controls.thorottle = action[0]
+        self.car_controls.brake = action[1]
+        self.car_controls.steering = action[2]
+
+        self.car.setCarControls(self.car_controls)
+        time.sleep(2)
+
+
     def transform_obs(self, response):
         img1d = np.array(response.image_data_float, dtype=np.float)
         img1d = 255 / np.maximum(np.ones(img1d.size), img1d)
@@ -205,10 +220,17 @@ class AirSimCarEnv(AirSimEnv):
 
     def step(self, action):
         # for continuous action_space
-        action = softmax(action) # if descrete, ignore this
-        action = int(np.random.choice(16, 1, p=action)) # if descrete, ignore this
+        # action = softmax(action) # if descrete, ignore this
+        # action = int(np.random.choice(16, 1, p=action)) # if descrete, ignore this
+        
+        # cts_action
+        # action = np.random.choice(0,
 
-        self._do_action(action)
+        # for discrete action
+        # self._do_action(action)
+
+        # for cts action
+        self._do_cts_action(action)
         obs = self._get_obs()
         reward, done = self._compute_reward()
 
