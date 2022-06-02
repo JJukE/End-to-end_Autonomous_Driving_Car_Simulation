@@ -3,12 +3,14 @@ import gym
 import airgym
 import time
 import tensorflow as tf
+import numpy as np
 
 from stable_baselines3 import DQN, A2C, DDPG
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 
 # Check if gpu is used or not
 print(tf.__version__)
@@ -65,18 +67,24 @@ env = VecTransposeImage(env)
 #    tensorboard_log="./tb_logs/",
 #)
 
+n_actions = env.action_space.shape[-1]
+mean_arr = np.zeros(n_actions)
+mean_arr += [0.5, 0.5, 0] # throttle : 0~1, brake : 0~1, steering : -1~1
+mean_arr = list(map(float, mean_arr)) # change datatype to Python float
+print(mean_arr)
+# action_noise = OrnsteinUhlenbeckActionNoise(mean=mean_arr, sigma=float(1.5) * np.ones(n_actions))
+action_noise = NormalActionNoise(mean=mean_arr, sigma=float(0.5) * np.ones(n_actions))
+
 # Initialize RL algorithm type and parameters - DDPG
 model_ddpg = DDPG(
     "CnnPolicy",
     env,
-    actor_lr=0.0005,
-    critic_lr=0.002,
-    critic_l2_reg=0.2,
-    tau=0.8,
-    normalize_observations=True,
-    normalize_returns=True,
+    learning_rate=0.001,
+    tau=0.005,
+    gamma=0.9,
     verbose=1,
-    batch_size=32,
+    batch_size=64,
+    action_noise=action_noise,
     buffer_size=400000,
     device="auto",
     tensorboard_log="./tb_logs/",

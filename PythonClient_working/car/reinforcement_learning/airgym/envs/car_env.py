@@ -32,7 +32,7 @@ class AirSimCarEnv(AirSimEnv):
 
         # for continuous action space
         # self.action_space = spaces.Box(low=-1, high=1, shape=(16, ))
-        self.action_space = spaces.Box( np.array([0, 0, -1]).astype(np.float32), np.array([1, 1, 1]).astype(no.float32)) # throttle, brake, steering
+        self.action_space = spaces.Box( np.array([0, 0, -1]).astype(np.float32), np.array([1, 1, 1]).astype(np.float32)) # throttle, brake, steering
 
         self.image_request = airsim.ImageRequest(
             "0", airsim.ImageType.DepthPerspective, True, False
@@ -126,13 +126,26 @@ class AirSimCarEnv(AirSimEnv):
     def _do_cts_action(self, action):
         self.car_controls.brake = 0
         self.car_controls.throttle = 1
+        # print('throttle_val = ', action[0])
+        # print('brake_val = ', action[1])
+        # print('steering_val = ', action[2])
 
-        self.car_controls.thorottle = action[0]
-        self.car_controls.brake = action[1]
-        self.car_controls.steering = action[2]
+        # throttle, brake 동시에 0보다 클 경우 차가 멈춤
+        if action[0] >= action[1]:
+            self.car_controls.throttle = float(action[0])
+            self.car_controls.brake = float(0)
+            self.car_controls.steering = float(action[2])
+            # print('throttle_val = ', self.car_controls.throttle)
+        else:
+            self.car_controls.throttle = float(0)
+            self.car_controls.brake = float(action[1])
+            self.car_controls.steering = float(action[2])
+            # print('brake_val = ', self.car_controls.brake)
+
+        # print('steering_val = ', action[2])
 
         self.car.setCarControls(self.car_controls)
-        time.sleep(2)
+        time.sleep(3)
 
 
     def transform_obs(self, response):
